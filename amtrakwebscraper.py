@@ -6,6 +6,46 @@ except ImportError:
     from bs4 import BeautifulSoup
 
 
+def getStationInfo(codeOrLocation):
+    pass
+
+
+def __getStatusUrl():
+    return 'https://assistive.amtrak.com/h5/assistive/train-status'
+
+
+def __getStatusHeader():
+    return {'accept'                    : 'text/html',
+            'accept-encoding'           : 'gzip, deflate, br',
+            'accept-language'           : 'en-US,en-q=0.9',
+            'cache-control'             : 'max-age=0',
+            'Content-Type'              : 'application/x-www-form-urlencoded',
+            'upgrade-insecure-requests' : '1'
+            }
+
+
+def __getStatusForm(arrival, trainNumber, stationCode, date):
+    form = {'action': 'searchTrainStatus',
+            'radioSelect': 'arrivalTime',
+            'wdf_trainNumber': '392',
+            'wdf_destination': 'Chicago, IL',
+            'unStCode_wdf_destination': 'CHI',
+            'departdisplay_train_number': '06/02/2018'
+            }
+    if arrival:
+        form['radioSelect'] = 'arrivalTime'
+    else:
+        form['radioSelect'] = ''
+
+
+def __getStatusPage(arrival, trainNumber, stationCode, date):
+    pass
+
+
+def getStatus(arrival, trainNumber, stationCode, date):
+    pass
+
+
 if __name__ == '__main__':
     url = 'https://assistive.amtrak.com/h5/assistive/train-status'
     header = {  'accept': 'text/html',
