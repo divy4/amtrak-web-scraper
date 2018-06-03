@@ -8,22 +8,28 @@ except ImportError:
 
 
 ''' Tries to resolve a station by its code or location.
-    @param [string] codeOrLocation   The station code OR the city the station is in.
-    @return [string, string] The station code AND the city the station is in.
+    @param [string] codeOrLoc   The station code OR the city the station is in.
+    @return [string, string]    The station code AND the city the station is in.
 '''
-def getStationInfo(codeOrLocation):
+def getStationInfo(codeOrLoc):
     # TODO: support more stations
-    if codeOrLocation == 'CHI' or codeOrLocation == 'Chicago, IL':
+    if codeOrLoc == 'CHI' or codeOrLoc == 'Chicago, IL':
         return 'CHI', 'Chicago, IL'
-    elif codeOrLocation == 'CHM' or codeOrLocation == 'Champaign, IL':
+    elif codeOrLoc == 'CHM' or codeOrLoc == 'Champaign, IL':
         return 'CHM', 'Champaign, IL'
     raise NotImplementedError('Unable to resolve station!')
 
 
+''' Gets the url of the train statis page.
+    @return [string] A url.
+'''
 def __getStatusUrl():
     return 'https://assistive.amtrak.com/h5/assistive/train-status'
 
 
+''' Gets the header for requesting a train's status.
+    @return [dict(string, string)]
+'''
 def __getStatusHeader():
     return {'accept'                    : 'text/html',
             'accept-encoding'           : 'gzip, deflate, br',
@@ -34,7 +40,15 @@ def __getStatusHeader():
             }
 
 
-def __getStatusForm(arrival, trainNumber, stationCode, stationLocation, date): 
+''' Gets the form for requesting a train's status.
+    @param [bool] arrival               True if requesting the arrival status, False for departure.
+    @param [int] trainNumber            The number of the train.
+    @param [string] stationCode         The code of the station.
+    @param [string] stationLoc          The location of the station. e.g. 'Chicago, IL'
+    @param [datetime.datetime] date     The date to query.
+    @return [dict(string, string)]      The form.
+'''
+def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date): 
     form = {'action': 'searchTrainStatus'}
     if arrival:
         form['radioSelect'] = 'arrivalTime'
@@ -42,15 +56,32 @@ def __getStatusForm(arrival, trainNumber, stationCode, stationLocation, date):
         form['radioSelect'] = 'departTime'
     form['wdf_trainNumber'] = str(trainNumber)
     form['unStCode_wdf_destination'] = stationCode
-    form['wdf_destination'] = stationLocation
+    form['wdf_destination'] = stationLoc
     form['departdisplay_train_number'] = date.strftime('%m/%d/%Y')
     return form
 
 
+''' Gets the train status page.
+    @param [bool] arrival               True if requesting the arrival status, False for departure.
+    @param [int] trainNumber            The number of the train.
+    @param [string] station             The code or location of the station.
+    @param [datetime.datetime] date     The date to query.
+    @return [BeautifulSoup]             The page.
+'''
 def __getStatusPage(arrival, trainNumber, station, date):
+    url = __getStatusUrl()
+    header = __getStatusHeader()
+    code, loc
     pass
 
 
+''' Gets the status of a train.
+    @param [bool] arrival               True if requesting the arrival status, False for departure.
+    @param [int] trainNumber            The number of the train.
+    @param [string] station             The code or location of the station.
+    @param [datetime.datetime] date     The date to query.
+    @return [dict]                      The status of the train.
+'''
 def getStatus(arrival, trainNumber, station, date):
     if not isinstance(arrival, bool):
         raise ValueError('arrival must be a boolean.')
