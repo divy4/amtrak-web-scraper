@@ -7,8 +7,17 @@ except ImportError:
     from bs4 import BeautifulSoup
 
 
+''' Tries to resolve a station by its code or location.
+    @param [string] codeOrLocation   The station code OR the city the station is in.
+    @return [string, string] The station code AND the city the station is in.
+'''
 def getStationInfo(codeOrLocation):
-    pass
+    # TODO: support more stations
+    if codeOrLocation == 'CHI' or codeOrLocation == 'Chicago, IL':
+        return 'CHI', 'Chicago, IL'
+    elif codeOrLocation == 'CHM' or codeOrLocation == 'Champaign, IL':
+        return 'CHM', 'Champaign, IL'
+    raise NotImplementedError('Unable to resolve station!')
 
 
 def __getStatusUrl():
@@ -34,7 +43,7 @@ def __getStatusForm(arrival, trainNumber, stationCode, stationLocation, date):
     form['wdf_trainNumber'] = str(trainNumber)
     form['unStCode_wdf_destination'] = stationCode
     form['wdf_destination'] = stationLocation
-    form['departdisplay_train_number'] = '%m/%d/%Y'
+    form['departdisplay_train_number'] = date.strftime('%m/%d/%Y')
     return form
 
 
@@ -56,20 +65,8 @@ def getStatus(arrival, trainNumber, station, date):
 
 if __name__ == '__main__':
     url = 'https://assistive.amtrak.com/h5/assistive/train-status'
-    header = {  'accept': 'text/html',
-                'accept-encoding': 'gzip, deflate, br',
-                'accept-language': 'en-US,en-q=0.9',
-                'cache-control': 'max-age=0',
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'upgrade-insecure-requests': '1'
-            }
-    form = {'action': 'searchTrainStatus',
-            'radioSelect': 'arrivalTime',
-            'wdf_trainNumber': '392',
-            'wdf_destination': 'Chicago, IL',
-            'unStCode_wdf_destination': 'CHI',
-            'departdisplay_train_number': '06/02/2018'
-            }
+    header = __getStatusHeader()
+    form = __getStatusForm(True, 392, 'CHI', 'Chicago, IL', datetime.datetime.today())
     response = requests.post(url, headers=header, data=form)
     parsedPage = BeautifulSoup(response.content, 'html5lib')
     status = parsedPage.find('div', {'class': 'result-content'})
