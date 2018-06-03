@@ -1,3 +1,4 @@
+import datetime
 import requests
 
 try:
@@ -24,25 +25,32 @@ def __getStatusHeader():
             }
 
 
-def __getStatusForm(arrival, trainNumber, stationCode, date):
-    form = {'action': 'searchTrainStatus',
-            'radioSelect': 'arrivalTime',
-            'wdf_trainNumber': '392',
-            'wdf_destination': 'Chicago, IL',
-            'unStCode_wdf_destination': 'CHI',
-            'departdisplay_train_number': '06/02/2018'
-            }
+def __getStatusForm(arrival, trainNumber, stationCode, stationLocation, date): 
+    form = {'action': 'searchTrainStatus'}
     if arrival:
         form['radioSelect'] = 'arrivalTime'
     else:
-        form['radioSelect'] = ''
+        form['radioSelect'] = 'departTime'
+    form['wdf_trainNumber'] = str(trainNumber)
+    form['unStCode_wdf_destination'] = stationCode
+    form['wdf_destination'] = stationLocation
+    form['departdisplay_train_number'] = '%m/%d/%Y'
+    return form
 
 
-def __getStatusPage(arrival, trainNumber, stationCode, date):
+def __getStatusPage(arrival, trainNumber, station, date):
     pass
 
 
-def getStatus(arrival, trainNumber, stationCode, date):
+def getStatus(arrival, trainNumber, station, date):
+    if not isinstance(arrival, bool):
+        raise ValueError('arrival must be a boolean.')
+    elif not isinstance(trainNumber, int):
+        raise ValueError('trainNumber must be a integer.')
+    elif not isinstance(station, str):
+        raise ValueError('station must be a string.')
+    elif not isinstance(date, datetime.datetime):
+        raise ValueError('date must be a datetime object.')
     pass
 
 
