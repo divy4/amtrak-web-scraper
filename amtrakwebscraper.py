@@ -69,10 +69,14 @@ def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date):
     @return [BeautifulSoup]             The page.
 '''
 def __getStatusPage(arrival, trainNumber, station, date):
+    # setup request info
+    code, loc = getStationInfo(station)
     url = __getStatusUrl()
     header = __getStatusHeader()
-    code, loc
-    pass
+    form = __getStatusForm(arrival, trainNumber, code, loc, date)
+    # get page
+    response = requests.post(url, headers=header, data=form)
+    return BeautifulSoup(response.content, 'html5lib')
 
 
 ''' Gets the status of a train.
@@ -95,11 +99,7 @@ def getStatus(arrival, trainNumber, station, date):
 
 
 if __name__ == '__main__':
-    url = 'https://assistive.amtrak.com/h5/assistive/train-status'
-    header = __getStatusHeader()
-    form = __getStatusForm(True, 392, 'CHI', 'Chicago, IL', datetime.datetime.today())
-    response = requests.post(url, headers=header, data=form)
-    parsedPage = BeautifulSoup(response.content, 'html5lib')
+    parsedPage = __getStatusPage(True, 392, 'CHM', datetime.datetime.today())
     status = parsedPage.find('div', {'class': 'result-content'})
     print(parsedPage.getText())
 
