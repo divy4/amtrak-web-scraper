@@ -95,11 +95,12 @@ def getStatus(arrival, trainNumber, station, date):
         raise ValueError('station must be a string.')
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
-    pass
+    page = __getStatusPage(arrival, trainNumber, station, date)
+    status = page.find('div', {'class': 'result-content'})
+    return status
 
 
 if __name__ == '__main__':
-    parsedPage = __getStatusPage(True, 392, 'CHM', datetime.datetime.today())
-    status = parsedPage.find('div', {'class': 'result-content'})
-    print(parsedPage.getText())
-
+    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
+    print(status)
+    
