@@ -96,11 +96,17 @@ def getStatus(arrival, trainNumber, station, date):
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
     page = __getStatusPage(arrival, trainNumber, station, date)
-    status = page.find('div', {'class': 'result-content'})
+    # find each piece of the status
+    rawStatus = page.find('div', {'class': 'result-content'})
+    status = {}
+    status['station'] = rawStatus.find('div', {'class': 'result-stations'}).children.next()
+    status['label'] = rawStatus.find('div', {'class': 'result-label'}).children.next()
+    status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'}).children.next()
+    status['expectedTime'] = rawStatus.find('div', {'class': 'result-time'}).children.next()
+    status['difference'] = rawStatus.find('div', {'class': 'result-primary'}).children.next()
     return status
 
 
 if __name__ == '__main__':
     status = getStatus(True, 392, 'CHI', datetime.datetime.now())
     print(status)
-    

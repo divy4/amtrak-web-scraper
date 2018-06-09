@@ -1,0 +1,16 @@
+<div class="result-content">
+                    <div class="result-stations">Chicago, IL (CHI)<br/>Union Station</div>
+                    <ul class="group">
+                        <li class="symbol">
+                            <div class="is-done">
+                                <span class="train-status-schedule-block_details_time"></span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="result-label">Estimated Arrival</div>
+                            <div class="result-time">9:15 pm</div>
+                            <div class="result-primary">30 minutes early</div>
+                            <div class="result-scheduled">ScheduledÂ 9:45 pm</div>
+                        </li>
+                    </ul>
+                </div>
