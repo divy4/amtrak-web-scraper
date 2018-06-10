@@ -17,6 +17,8 @@ def getStationInfo(codeOrLoc):
         return 'CHI', 'Chicago, IL'
     elif codeOrLoc == 'CHM' or codeOrLoc == 'Champaign, IL':
         return 'CHM', 'Champaign, IL'
+    elif codeOrLoc == 'RTL' or codeOrLoc == 'Rantoul, IL':
+        return 'RTL', 'Rantoul, IL'
     raise NotImplementedError('Unable to resolve station!')
 
 
@@ -99,14 +101,21 @@ def getStatus(arrival, trainNumber, station, date):
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
     status = {}
-    status['station'] = rawStatus.find('div', {'class': 'result-stations'}).children.next()
-    status['label'] = rawStatus.find('div', {'class': 'result-label'}).children.next()
-    status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'}).children.next()
-    status['expectedTime'] = rawStatus.find('div', {'class': 'result-time'}).children.next()
-    status['difference'] = rawStatus.find('div', {'class': 'result-primary'}).children.next()
+    status['station']       = rawStatus.find('div', {'class': 'result-stations'})
+    status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'})
+    status['expectedTime']  = rawStatus.find('div', {'class': 'result-time'})
+    status['difference']    = rawStatus.find('div', {'class': 'result-primary'})
+    # normalize data to strings
+    for key, value in status.items():
+        text = value.getText()
+        status[key] = str(text.encode('ascii', 'ignore'))
     return status
 
 
 if __name__ == '__main__':
-    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
-    print(status)
+    status = getStatus(True, 392, 'RTL', datetime.datetime.now())
+    for label, value in status.items():
+        print(label + ':')
+        print(type(value))
+        print(value)
+        print('')
