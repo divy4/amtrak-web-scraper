@@ -6,6 +6,14 @@ try:
 except ImportError:
     from bs4 import BeautifulSoup
 
+''' Converts a BeautifulSoup object to a ascii string.
+    @param [object] bs A BeautifulSoup object.
+    @return [string] A string.
+'''
+def beautifulSoupToStr(bs):
+    text = bs.getText()
+    return str(text.encode('ascii', 'ignore'))
+
 
 ''' Tries to resolve a station by its code or location.
     @param [string] codeOrLoc   The station code OR the city the station is in.
@@ -107,8 +115,7 @@ def getStatus(arrival, trainNumber, station, date):
     status['difference']    = rawStatus.find('div', {'class': 'result-primary'})
     # normalize data to strings
     for key, value in status.items():
-        text = value.getText()
-        status[key] = str(text.encode('ascii', 'ignore'))
+        status[key] = beautifulSoupToStr(value)
     return status
 
 
