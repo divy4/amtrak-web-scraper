@@ -123,7 +123,7 @@ def getStatus(arrival, trainNumber, station, date):
 
 
 if __name__ == '__main__':
-    status = getStatus(True, 3924, 'RTL', datetime.datetime.now())
+    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
     if status is not None:
         for label, value in status.items():
             print(label + ':')
