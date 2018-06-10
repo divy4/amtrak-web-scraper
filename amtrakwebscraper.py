@@ -95,7 +95,7 @@ def __getStatusPage(arrival, trainNumber, station, date):
     @param [int] trainNumber            The number of the train.
     @param [string] station             The code or location of the station.
     @param [datetime.datetime] date     The date to query.
-    @return [dict]                      The status of the train.
+    @return [dict]                      The status of the train. None if an error occurred while parsing.
 '''
 def getStatus(arrival, trainNumber, station, date):
     if not isinstance(arrival, bool):
@@ -127,6 +127,5 @@ if __name__ == '__main__':
     if status is not None:
         for label, value in status.items():
             print(label + ':')
-            print(type(value))
             print(value)
             print('')
