@@ -7,6 +7,15 @@ except ImportError:
     from bs4 import BeautifulSoup
 
 
+''' Converts a BeautifulSoup object to a ascii string.
+    @param [object] bs A BeautifulSoup object.
+    @return [string] A string.
+'''
+def beautifulSoupToStr(bs):
+    text = bs.getText()
+    return str(text.encode('ascii', 'ignore'))
+
+
 ''' Tries to resolve a station by its code or location.
     @param [string] codeOrLoc   The station code OR the city the station is in.
     @return [string, string]    The station code AND the city the station is in.
@@ -86,7 +95,7 @@ def __getStatusPage(arrival, trainNumber, station, date):
     @param [int] trainNumber            The number of the train.
     @param [string] station             The code or location of the station.
     @param [datetime.datetime] date     The date to query.
-    @return [dict]                      The status of the train.
+    @return [dict]                      The status of the train. None if an error occurred while parsing.
 '''
 def getStatus(arrival, trainNumber, station, date):
     if not isinstance(arrival, bool):
@@ -100,6 +109,8 @@ def getStatus(arrival, trainNumber, station, date):
     page = __getStatusPage(arrival, trainNumber, station, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
+    if rawStatus is None:
+        return None
     status = {}
     status['station']       = rawStatus.find('div', {'class': 'result-stations'})
     status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'})
@@ -107,15 +118,14 @@ def getStatus(arrival, trainNumber, station, date):
     status['difference']    = rawStatus.find('div', {'class': 'result-primary'})
     # normalize data to strings
     for key, value in status.items():
-        text = value.getText()
-        status[key] = str(text.encode('ascii', 'ignore'))
+        status[key] = beautifulSoupToStr(value)
     return status
 
 
 if __name__ == '__main__':
-    status = getStatus(True, 392, 'RTL', datetime.datetime.now())
-    for label, value in status.items():
-        print(label + ':')
-        print(type(value))
-        print(value)
-        print('')
+    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
+    if status is not None:
+        for label, value in status.items():
+            print(label + ':')
+            print(value)
+            print('')
