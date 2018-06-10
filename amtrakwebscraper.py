@@ -6,6 +6,7 @@ try:
 except ImportError:
     from bs4 import BeautifulSoup
 
+
 ''' Converts a BeautifulSoup object to a ascii string.
     @param [object] bs A BeautifulSoup object.
     @return [string] A string.
@@ -108,6 +109,8 @@ def getStatus(arrival, trainNumber, station, date):
     page = __getStatusPage(arrival, trainNumber, station, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
+    if rawStatus is None:
+        return None
     status = {}
     status['station']       = rawStatus.find('div', {'class': 'result-stations'})
     status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'})
