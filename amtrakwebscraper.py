@@ -13,7 +13,7 @@ except ImportError:
 '''
 def beautifulSoupToStr(bs):
     text = bs.getText()
-    return str(text.encode('ascii', 'ignore'))
+    return str(text.encode('ascii', 'ignore'))[2:-1]
 
 
 ''' Tries to resolve a station by its code or location.
@@ -117,6 +117,8 @@ def getStatus(arrival, trainNumber, station, date):
     # normalize data to strings
     for key, value in status.items():
         status[key] = beautifulSoupToStr(value)
+    # remove extra text
+    status['scheduledTime'] = status['scheduledTime'].replace('Scheduled', '')
     return status
 
 
@@ -124,6 +126,5 @@ if __name__ == '__main__':
     status = getStatus(True, 392, 'CHI', datetime.datetime.now())
     if status is not None:
         for label, value in status.items():
-            print(label + ':')
-            print(value)
-            print('')
+            print(label + ' : ' + value)
+
