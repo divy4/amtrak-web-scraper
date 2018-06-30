@@ -1,10 +1,14 @@
 import datetime
+import math
 import requests
 
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
     from bs4 import BeautifulSoup
+
+
+__DAY_DELTA = datetime.timedelta(days=2)
 
 
 ''' Converts a BeautifulSoup object to a ascii string.
@@ -133,6 +137,10 @@ def getStatus(arrival, trainNumber, station, date):
         status[key] = beautifulSoupToStr(value).replace('Scheduled', '')
         if 'time' in key.lower():
             status[key] = __timeToDatetime(date, status[key], zone)
+    # Make sure expected arrival time is no more than half a day early.
+    diff = status['expectedTime'] - status['scheduledTime']
+    if diff <= -0.5 * __DAY_DELTA:
+        status['expectedTime'] = status['expectedTime'] + math.ceil(diff / __DAY_DELTA) * __DAY_DELTA
     return status
 
 
