@@ -141,6 +141,11 @@ def getStatus(arrival, trainNumber, station, date):
     diff = status['expectedTime'] - status['scheduledTime']
     if diff <= -0.5 * __DAY_DELTA:
         status['expectedTime'] = status['expectedTime'] + math.ceil(diff / __DAY_DELTA) * __DAY_DELTA
+    # include extra info
+    status['isArrival'] = arrival
+    status['stationCode'] = code
+    status['stationLocation'] = location
+    status['trainNumber'] = trainNumber
     return status
 
 
