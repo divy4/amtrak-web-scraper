@@ -1,5 +1,6 @@
 import datetime
 import math
+import pytz
 import requests
 
 try:
@@ -27,25 +28,26 @@ def beautifulSoupToStr(bs):
 def getStationInfo(codeOrLoc):
     # TODO: support more stations
     if codeOrLoc == 'CHI' or codeOrLoc == 'Chicago, IL':
-        return 'CHI', 'Chicago, IL', 'CST'
+        return 'CHI', 'Chicago, IL', pytz.timezone('US/Central')
     elif codeOrLoc == 'CHM' or codeOrLoc == 'Champaign, IL':
-        return 'CHM', 'Champaign, IL', 'CST'
+        return 'CHM', 'Champaign, IL', pytz.timezone('US/Central')
     elif codeOrLoc == 'RTL' or codeOrLoc == 'Rantoul, IL':
-        return 'RTL', 'Rantoul, IL', 'CST'
+        return 'RTL', 'Rantoul, IL', pytz.timezone('US/Central')
     raise NotImplementedError('Unable to resolve station!')
 
 
 ''' Combines the date, time, and time zone into a datetime object.
-    @param [datetime]   date    The date the train is arriving/departing.
-    @param [string]     timeStr The time string from the page text.
-    @param [string]     zoneStr The time zone string the station is in.
+    @param [datetime]   date        The date the train is arriving/departing.
+    @param [string]     timeStr     The time string from the page text.
+    @param [timezone]   timezone    The timezone the station is in.
 '''
-def __timeToDatetime(date, timeStr, zoneStr):
+def __timeToDatetime(date, timeStr, timezone):
     if len(timeStr) == 7:
         timeStr = '0' + timeStr
-    return datetime.datetime.strptime(
-            '{} {} {}'.format(date.strftime('%Y-%m-%d'), timeStr, zoneStr),
-            '%Y-%m-%d %I:%M %p %Z')
+    time = datetime.datetime.strptime(
+        '{} {}'.format(date.strftime('%Y-%m-%d'), timeStr),
+        '%Y-%m-%d %I:%M %p')
+    return timezone.localize(time)
 
 
 ''' Gets the url of the train statis page.
@@ -123,7 +125,7 @@ def getStatus(arrival, trainNumber, station, date):
         raise ValueError('station must be a string.')
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
-    code, location, zone = getStationInfo(station)
+    code, location, timezone = getStationInfo(station)
     page = __getStatusPage(arrival, trainNumber, code, location, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
@@ -136,7 +138,7 @@ def getStatus(arrival, trainNumber, station, date):
     for key, value in status.items():
         status[key] = beautifulSoupToStr(value).replace('Scheduled', '')
         if 'time' in key.lower():
-            status[key] = __timeToDatetime(date, status[key], zone)
+            status[key] = __timeToDatetime(date, status[key], timezone)
     # Make sure expected arrival time is no more than half a day early.
     diff = status['expectedTime'] - status['scheduledTime']
     if diff <= -0.5 * __DAY_DELTA:
