@@ -75,7 +75,8 @@ def __getStatusHeader():
     @param [int] trainNumber            The number of the train.
     @param [string] stationCode         The code of the station.
     @param [string] stationLoc          The location of the station. e.g. 'Chicago, IL'
-    @param [datetime.datetime] date     The date to query.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [dict(string, string)]      The form.
 '''
 def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date): 
@@ -96,7 +97,8 @@ def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date):
     @param [int] trainNumber            The number of the train.
     @param [string] stationCode         The code of the station.
     @param [string] stationLoc          The location of the station.
-    @param [datetime.datetime] date     The date to query.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [BeautifulSoup]             The page.
 '''
 def __getStatusPage(arrival, trainNumber, stationCode, stationLoc, date):
@@ -113,7 +115,8 @@ def __getStatusPage(arrival, trainNumber, stationCode, stationLoc, date):
     @param [bool] arrival               True if requesting the arrival status, False for departure.
     @param [int] trainNumber            The number of the train.
     @param [string] station             The code or location of the station.
-    @param [datetime.datetime] date     The date to query.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [dict]                      The status of the train. None if an error occurred while parsing.
 '''
 def getStatus(arrival, trainNumber, station, date):
@@ -126,6 +129,7 @@ def getStatus(arrival, trainNumber, station, date):
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
     code, location, timezone = getStationInfo(station)
+    date = timezone.localize(date)
     page = __getStatusPage(arrival, trainNumber, code, location, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
