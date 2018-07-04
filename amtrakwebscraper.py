@@ -1,10 +1,15 @@
 import datetime
+import math
+import pytz
 import requests
 
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
     from bs4 import BeautifulSoup
+
+
+__DAY_DELTA = datetime.timedelta(days=2)
 
 
 ''' Converts a BeautifulSoup object to a ascii string.
@@ -18,17 +23,31 @@ def beautifulSoupToStr(bs):
 
 ''' Tries to resolve a station by its code or location.
     @param [string] codeOrLoc   The station code OR the city the station is in.
-    @return [string, string]    The station code AND the city the station is in.
+    @return [string, string, string]    The station code, the city the station is in, the time station's time zone.
 '''
 def getStationInfo(codeOrLoc):
     # TODO: support more stations
     if codeOrLoc == 'CHI' or codeOrLoc == 'Chicago, IL':
-        return 'CHI', 'Chicago, IL'
+        return 'CHI', 'Chicago, IL', pytz.timezone('US/Central')
     elif codeOrLoc == 'CHM' or codeOrLoc == 'Champaign, IL':
-        return 'CHM', 'Champaign, IL'
+        return 'CHM', 'Champaign, IL', pytz.timezone('US/Central')
     elif codeOrLoc == 'RTL' or codeOrLoc == 'Rantoul, IL':
-        return 'RTL', 'Rantoul, IL'
+        return 'RTL', 'Rantoul, IL', pytz.timezone('US/Central')
     raise NotImplementedError('Unable to resolve station!')
+
+
+''' Combines the date, time, and time zone into a datetime object.
+    @param [datetime]   date        The date the train is arriving/departing.
+    @param [string]     timeStr     The time string from the page text.
+    @param [timezone]   timezone    The timezone the station is in.
+'''
+def __timeToDatetime(date, timeStr, timezone):
+    if len(timeStr) == 7:
+        timeStr = '0' + timeStr
+    time = datetime.datetime.strptime(
+        '{} {}'.format(date.strftime('%Y-%m-%d'), timeStr),
+        '%Y-%m-%d %I:%M %p')
+    return timezone.localize(time)
 
 
 ''' Gets the url of the train statis page.
@@ -56,7 +75,8 @@ def __getStatusHeader():
     @param [int] trainNumber            The number of the train.
     @param [string] stationCode         The code of the station.
     @param [string] stationLoc          The location of the station. e.g. 'Chicago, IL'
-    @param [datetime.datetime] date     The date to query.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [dict(string, string)]      The form.
 '''
 def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date): 
@@ -75,16 +95,17 @@ def __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date):
 ''' Gets the train status page.
     @param [bool] arrival               True if requesting the arrival status, False for departure.
     @param [int] trainNumber            The number of the train.
-    @param [string] station             The code or location of the station.
-    @param [datetime.datetime] date     The date to query.
+    @param [string] stationCode         The code of the station.
+    @param [string] stationLoc          The location of the station.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [BeautifulSoup]             The page.
 '''
-def __getStatusPage(arrival, trainNumber, station, date):
+def __getStatusPage(arrival, trainNumber, stationCode, stationLoc, date):
     # setup request info
-    code, loc = getStationInfo(station)
     url = __getStatusUrl()
     header = __getStatusHeader()
-    form = __getStatusForm(arrival, trainNumber, code, loc, date)
+    form = __getStatusForm(arrival, trainNumber, stationCode, stationLoc, date)
     # get page
     response = requests.post(url, headers=header, data=form)
     return BeautifulSoup(response.content, 'html5lib')
@@ -94,7 +115,8 @@ def __getStatusPage(arrival, trainNumber, station, date):
     @param [bool] arrival               True if requesting the arrival status, False for departure.
     @param [int] trainNumber            The number of the train.
     @param [string] station             The code or location of the station.
-    @param [datetime.datetime] date     The date to query.
+    @param [datetime.datetime] date     The date to query (must be localized or represent the date
+                                                of the timezone the station is located in).
     @return [dict]                      The status of the train. None if an error occurred while parsing.
 '''
 def getStatus(arrival, trainNumber, station, date):
@@ -106,7 +128,13 @@ def getStatus(arrival, trainNumber, station, date):
         raise ValueError('station must be a string.')
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
-    page = __getStatusPage(arrival, trainNumber, station, date)
+    code, location, timezone = getStationInfo(station)
+    # localize date to station's timezone
+    if date.tzinfo:
+        date = date.astimezone(timezone)
+    else:
+        date = timezone.localize(date)
+    page = __getStatusPage(arrival, trainNumber, code, location, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
     status = {}
@@ -114,17 +142,26 @@ def getStatus(arrival, trainNumber, station, date):
     status['scheduledTime'] = rawStatus.find('div', {'class': 'result-scheduled'})
     status['expectedTime']  = rawStatus.find('div', {'class': 'result-time'})
     status['difference']    = rawStatus.find('div', {'class': 'result-primary'})
-    # normalize data to strings
+    # normalize data
     for key, value in status.items():
-        status[key] = beautifulSoupToStr(value)
-    # remove extra text
-    status['scheduledTime'] = status['scheduledTime'].replace('Scheduled', '')
+        status[key] = beautifulSoupToStr(value).replace('Scheduled', '')
+        if 'time' in key.lower():
+            status[key] = __timeToDatetime(date, status[key], timezone)
+    # Make sure expected arrival time is no more than half a day early.
+    diff = status['expectedTime'] - status['scheduledTime']
+    if diff <= -0.5 * __DAY_DELTA:
+        status['expectedTime'] = status['expectedTime'] + math.ceil(diff / __DAY_DELTA) * __DAY_DELTA
+    # include extra info
+    status['isArrival'] = arrival
+    status['stationCode'] = code
+    status['stationLocation'] = location
+    status['trainNumber'] = trainNumber
     return status
 
 
 if __name__ == '__main__':
-    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
+    status = getStatus(True, 392, 'CHI', pytz.utc.localize(datetime.datetime.now()))
     if status is not None:
         for label, value in status.items():
-            print(label + ' : ' + value)
+            print(label + ' : ' + str(value))
 
