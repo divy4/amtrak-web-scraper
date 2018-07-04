@@ -129,7 +129,11 @@ def getStatus(arrival, trainNumber, station, date):
     elif not isinstance(date, datetime.datetime):
         raise ValueError('date must be a datetime object.')
     code, location, timezone = getStationInfo(station)
-    date = timezone.localize(date)
+    # localize date to station's timezone
+    if date.tzinfo:
+        date = date.astimezone(timezone)
+    else:
+        date = timezone.localize(date)
     page = __getStatusPage(arrival, trainNumber, code, location, date)
     # find each piece of the status
     rawStatus = page.find('div', {'class': 'result-content'})
@@ -156,7 +160,7 @@ def getStatus(arrival, trainNumber, station, date):
 
 
 if __name__ == '__main__':
-    status = getStatus(True, 392, 'CHI', datetime.datetime.now())
+    status = getStatus(True, 392, 'CHI', pytz.utc.localize(datetime.datetime.now()))
     if status is not None:
         for label, value in status.items():
             print(label + ' : ' + str(value))
